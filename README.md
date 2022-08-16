@@ -41,7 +41,6 @@ L'initialisation doit prendre au moins un des deux paramètres suivants:
 _Si non précisé, la fonction initialise shortcut_
 
 >En paramètre supplémentaire, nous pouvons mettre:<br/>
->- error_lock: Purge le retour de la fonction si une erreur s'est produite (Par défaut: )
 >- type: Pour forcer le paramètre reçu à un str ou un digit (Par défaut: None)
 >- default: Pour choisir une valeur par défaut(Par défaut: None)
 >- description: Pour ajouter une description au paramètre à afficher lors de l'appel de la commande help(Par défaut: None)
