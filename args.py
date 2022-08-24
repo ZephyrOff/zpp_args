@@ -1,3 +1,16 @@
+####################################################################
+#/ Nom du projet: py-zpp_args                                     /#
+#/ Nom du fichier: args.py                                        /#
+#/ Type de fichier: fichier principal                             /#
+#/ Fichier annexe:                                                /#
+#/                                                                /#
+#/ Auteur: ZephyrOff  (Alexandre Pajak)                           /#
+#/ Version: 1.1                                                   /#
+#/ Description: Module pour le traitement des arguments d'une     /#
+#/              ligne de commande                                 /#
+#/ Date: 24/08/2022                                               /#
+####################################################################
+
 import sys
 import inspect
 import re
@@ -27,8 +40,10 @@ def digit(x):
 
 class parser():
 	def __init__(self, source=None, error_lock=False):
-		self.available_arg = {}
+		self.available_arg = []
+		self.available_param = []
 		self.error_lock = error_lock
+		self.check_parameter = True
 
 		if source==None:
 			self.command = sys.argv[0]
@@ -38,147 +53,157 @@ class parser():
 				self.command = source[0]
 				self.source = source[1:]
 			else:
-				if isinstance(source, str):
-					self.command, self.source = self.arg_parse(source.split(" "))
-				elif isinstance(source, list):
-					self.command, self.source = self.arg_parse(source)
-				print(self.source)
-
+				self.command, self.source = self.arg_parse(source)
 
 	def search(self, option):
 		for element in self.available_arg:
-			if self.available_arg[element]['longname']==option:
+			if element['longname']==option:
 				return element
 		return None
 
 
 	def find_short(self, name):
 		for element in self.available_arg:
-			if self.available_arg[element]['shortcut']==name:
+			if element['shortcut']==name:
 				return element
 		return None
 
 
-	def set_param(self,option,val):
-		if option not in self.parameter:	
-			self.parameter[option]=val
+	def set_param(self,option,val,store):
+		if option not in self.argument:
+			if store=="digit":
+				if val.isdigit():
+					val = int(val)
+				else: 
+					val = float(val)
+			self.argument[option]=val
 			return True
 		else:
-			print(f"Parameter {option} already set")
+			print(f"Argument {option} already set")
 
 
 	def set_result(self,option):
-		if self.available_arg[option]['longname']:
-			name = self.available_arg[option]['longname']
+		if option['longname']:
+			name = option['longname']
 		else:
-			name = self.available_arg[option]['shortcut']
+			name = option['shortcut']
 
-		if self.available_arg[option]['store']=="value":
+		if option['store']=="value":
 			if len(self.source)>0 and self.source[0].startswith('-')==False:
-				if self.available_arg[option]['type']!=None:
+				if option['type']!=None:
 					val_arg = self.source.pop(0)
-					if self.available_arg[option]['type']=="str" or (self.available_arg[option]['type']=="digit" and digit(val_arg)):
-						if not self.set_param(name,val_arg):
+					if option['type']=="str" or (option['type']=="digit" and digit(val_arg)):
+						if not self.set_param(name,val_arg,option['type']):
 							return None
 					else:
-						print(f"Parameter {option}: Bad value type")
-						if self.available_arg[option]['default']!=None:
-							if not self.set_param(name,self.available_arg[option]['default']):
+						print(f"Argument {name}: Bad value type")
+						if "default" in option.keys():
+							if not self.set_param(name,option['default'],option['type']):
 								return None
 						else:
 							return None
 				else:
-					if not self.set_param(name,self.source.pop(0)):
+					if not self.set_param(name,self.source.pop(0),option['type']):
 						return None
 			else:
-				print(f"Parameter {name}: Missing value")
-				if self.available_arg[option]['default']!=None:
-					if not self.set_param(name,self.available_arg[option]['default']):
+				print(f"Argument {name}: Missing value")
+				if option['default']!=None:
+					if not self.set_param(name,option['default'],option['type']):
 						return None
 				else:
 					return None
 
-		elif self.available_arg[option]['store']=="bool":
-			if not self.set_param(name,True):
+		elif option['store']=="bool":
+			if not self.set_param(name,True,option['type']):
 				return None
 		return 1
 
 
 	def load(self):
-		self.argument = []
-		self.parameter = {}
+		self.parameter = []
+		self.argument = {}
 
 		msg_error = "\nError: "
 
 		while(len(self.source)!=0):
 			element = self.source.pop(0)
-			
 			if element.startswith('--'):
 				option = element[2:]
 				if option=="help":
 					self.help()
-					return [], {}
+					return None, None
 				else:
 					find = self.search(option)
 					if find!=None:
 						status_code = self.set_result(find)
 						if status_code==None and self.error_lock:
-							return [], {}
+							return None, None
 					else:
-						msg_error += f"\n  Parameter {option} not available"
+						msg_error += f"\n  Argument {option} not available"
 
 			elif element.startswith('-'):
 				if "h" in element[1:]:
 					self.help()
-					return [], {}
+					return None, None
 				else:
 					for option in element[1:]:
 						f = self.find_short(option)
 						if f!=None:
 							status_code = self.set_result(f)
 							if status_code==None and self.error_lock:
-								return [], {}
+								return None, None
 						else:
-							msg_error += f"\n  Parameter {option} not available"
+							msg_error += f"\n  Argument {option} not available"
 
 			else:
-				self.argument.append(element)
+				self.parameter.append(element)
 
 		msg=""
 		for ar in self.available_arg:
-			if self.available_arg[ar]['required']==True and not (self.available_arg[ar]['shortcut'] in self.parameter or self.available_arg[ar]['longname'] in self.parameter):
-				set_default=False
-				if self.available_arg[ar]['default']!=None:
-					if self.available_arg[ar]['longname']:
-						name = self.available_arg[ar]['longname']
+			if not (ar['shortcut'] in self.argument or ar['longname'] in self.argument):
+				if "default" in ar.keys():
+					if ar['longname']:
+						name = ar['longname']
 					else:
-						name = self.available_arg[ar]['shortcut']
+						name = ar['shortcut']
+					self.set_param(name,ar['default'],ar['type'])
 
-					if self.set_param(name,self.available_arg[ar]['default']):
-						set_default=True
+				if ar['required']==True and not (ar['shortcut'] in self.argument or ar['longname'] in self.argument):
+					set_default=False
+					if "default" in ar.keys():
+						if ar['longname']:
+							name = ar['longname']
+						else:
+							name = ar['shortcut']
 
-				if set_default==False:
-					if self.available_arg[ar]['shortcut']=="":
-						n = self.available_arg[ar]['longname']
-					else:
-						n = self.available_arg[ar]['shortcut']
-					if len(msg)==0:
-						msg=n
-					else:
-						msg+=", "+n
+						if self.set_param(name,ar['default'],ar['type']):
+							set_default=True
+
+					if set_default==False:
+						if ar['shortcut']=="":
+							n = ar['longname']
+						else:
+							n = ar['shortcut']
+						if len(msg)==0:
+							msg=n
+						else:
+							msg+=", "+n
+
+		if self.check_parameter==True and len(self.available_param)<len(self.parameter):
+			msg_error+=f"Missing parameter ({len(self.available_param)} needed but {len(self.parameter)} received)"
 
 		if len(msg)!=0:
-			msg_error += f"\n  Parameter {msg} not initialized"
+			msg_error += f"\n  Argument {msg} not initialized"
 			self.help()
 			print(msg_error)
-			return [], {}
+			return None, None
 
 		if msg_error!="\nError: ":
 			print(msg_error)
 			if self.error_lock:
-				return [], {}
+				return None, None
 
-		return self.argument, self.parameter
+		return self.parameter, self.argument
 
 
 	def arg_parse(self, string):
@@ -189,7 +214,8 @@ class parser():
 		if len(string)>=1:
 			arg = ""
 			lock = None
-			string = " ".join(string)
+			if isinstance(string, list):
+				string = " ".join(string)
 			for i,caracter in enumerate(string):
 				if (caracter=="'" or caracter=='"') and (lock==None or caracter==lock):
 					if lock==None:
@@ -201,131 +227,150 @@ class parser():
 				else:
 					if caracter==" " and lock!=None:
 						arg+=caracter
-					elif caracter==" " and len(arg)>1 and lock==None:
+					elif caracter==" " and len(arg)>=1 and lock==None:
 						array.append(arg)
 						arg=""
 					elif caracter!=" ":
 						arg+=caracter
 						if i==len(string)-1:
 							array.append(arg)
+							arg=""
 
 		return command, array
 
 
 	def already_exist(self,shortcut,longname):
 		for el in self.available_arg:
-			if shortcut!="" and shortcut==self.available_arg[el]['shortcut']:
+			if shortcut!="" and shortcut==el['shortcut']:
 				return True
 
-			if longname!=None and longname!="" and longname==self.available_arg[el]['longname']:
+			if longname!=None and longname!="" and longname==el['longname']:
 				return True
 		return False
 
+	def param_exist(self,name):
+		for el in self.available_param:
+			if el['name']==name:
+				return True
+		return False
 
-	def set_parameter(self, shortcut="", longname=None, type=None, default=None, description=None, required=False, store="bool"):
+	def set_parameter(self, name, description=None):
+		if not self.param_exist(name):
+			insert = {'name': name, 'description': description}
+			self.available_param.append(insert)
+		else:
+			print(f"Parameter {name} already set")
+
+
+	def set_argument(self, shortcut="", longname=None, type=None, default="", description=None, required=False, store="bool"):
 		if self.already_exist(shortcut,longname):
-			print(f"Error for setting parameter")
+			print("Error for setting argument")
 		else:
 			if shortcut!="" or longname!=None:
 				if shortcut!="h" and longname!="help":
-					name = len(self.available_arg)
-					self.available_arg[name] = {}
-					self.available_arg[name]['shortcut'] = shortcut
-					self.available_arg[name]['longname'] = longname
-					self.available_arg[name]['default'] = default
-					self.available_arg[name]['description'] = description
+					insert = {'shortcut': shortcut, 'longname': longname}
+					if default!="":
+						insert['default'] = default
+					insert['description'] = description
 
 					if type=="str" or type=="digit":
-						self.available_arg[name]['type'] = type
+						insert['type'] = type
 					else:
-						self.available_arg[name]['type'] = None
+						insert['type'] = None
 					
 					if isinstance(required,bool):
-						self.available_arg[name]['required'] = required
+						insert['required'] = required
 					else:
-						self.available_arg[name]['required'] = False
+						insert['required'] = False
 
 					if store=="value" or store=="bool":
-						self.available_arg[name]['store'] = store
+						insert['store'] = store
 					else:
-						self.available_arg[name]['store'] = "bool"
+						insert['store'] = "bool"
+					self.available_arg.append(insert)
 				else:
-					print(f"Parameter h(help) not authorized")
+					print("Argument h(help) not authorized")
 			else:
-				print("Error for setting parameter")
+				print("Error for setting argument")
 			
 
 	def set_description(self, description):
 		if len(description)!=0:
 			self.main_description = description
 
+	def disable_check(self):
+		self.check_parameter = False
 
 	def help(self):
 		mm = self.command + " [-h]"
 
 		for a in self.available_arg:
-			if self.available_arg[a]['shortcut']!="":
-				val = self.available_arg[a]['shortcut']
+			if a['shortcut']!="":
+				val = a['shortcut']
 			else:
-				val = "-"+self.available_arg[a]['longname']
+				val = "-"+a['longname']
 
-			if self.available_arg[a]['required']:
-				if self.available_arg[a]['store']=="value":
+			if a['required']:
+				if a['store']=="value":
 					mm+=" -"+val+" VALUE"
 				else:
 					mm+=" -"+val
 
 			else:
 				mm+=" ["
-				if self.available_arg[a]['store']=="value":
+				if a['store']=="value":
 					mm+="-"+val+" VALUE"
 				else:
 					mm+="-"+val
 
 				mm+="]"
+
+		for a in self.available_param:
+			mm+=" "+a['name'].upper()
+
 		print("\nUsage: "+mm)
 
-		if self.main_description:
-			print("\nDescription:\n  "+self.main_description+"\n")
+		if hasattr(self, "main_description"):
+			print("\nDescription:\n  "+self.main_description)
 
 		if len(self.available_arg)!=0:
 			ar = []
 			maxsize = 0
-			print("arguments:")
+			print("\nArguments:")
 			for a in self.available_arg:
 				ins = ["",""]
-				if self.available_arg[a]['shortcut']!="":
-					ins[0]="  -"+self.available_arg[a]['shortcut']
-					if self.available_arg[a]['longname']:
-						ins[0]+=", --"+self.available_arg[a]['longname']
+				if a['shortcut']!="":
+					ins[0]="  -"+a['shortcut']
+					if a['longname']:
+						ins[0]+=", --"+a['longname']
 				else:
-					ins[0]="  --"+self.available_arg[a]['longname']
-				if self.available_arg[a]['store']=="value":
+					ins[0]="  --"+a['longname']
+				if a['store']=="value":
 					ins[0]+=" VALUE"
 
-				if self.available_arg[a]['description']:
-					ins[1]+=self.available_arg[a]['description']
+				if a['description']:
+					ins[1]+=a['description']
 
-				if self.available_arg[a]['required']:
+				if a['required']:
 					if len(ins[1])!=0:
 						ins[1]+=" "
 					ins[1]+="(Required)"
 
-				if self.available_arg[a]['type']=="digit":
+				if a['type']=="digit":
 					if len(ins[1])!=0:
 						ins[1]+=" "
 					ins[1]+=" (Type: digit)"
 					
-				if self.available_arg[a]['default']:
+				if "default" in a.keys() and a['default']:
 					if len(ins[1])!=0:
 						ins[1]+=" "
 
-					if self.available_arg[a]['default']==True:
+					if a['default']==True:
 						ins[1]+=" (Default Value: True)"
-					elif self.available_arg[a]['default']==False:
+					elif a['default']==False:
 						ins[1]+=" (Default Value: False)"
 					else:
-						ins[1]+=" (Default Value: "+self.available_arg[a]['default']+")"
+						ins[1]+=" (Default Value: "+a['default']+")"
 
 				if len(ins[0])>maxsize:
 					maxsize = len(ins[0])
@@ -334,3 +379,16 @@ class parser():
 
 			for a in ar:
 				print(a[0]+" "*((maxsize-len(a[0]))+3)+a[1])
+
+		if len(self.available_param)!=0:
+			ar = []
+			maxsize = 0
+			print("\nParameters:")
+			for a in self.available_param:
+				ar.append([a['name'],a['description']])
+
+				if len(a['name'])>maxsize:
+					maxsize = len(a['name'])
+
+			for a in ar:
+				print("  "+a[0].upper()+" "*((maxsize-len(a[0]))+3)+a[1])
