@@ -1,14 +1,14 @@
 ####################################################################
-#/ Nom du projet: py-zpp_args                                     /#
-#/ Nom du fichier: args.py                                        /#
-#/ Type de fichier: fichier principal                             /#
-#/ Fichier annexe:                                                /#
-#/                                                                /#
-#/ Auteur: ZephyrOff  (Alexandre Pajak)                           /#
-#/ Version: 1.1                                                   /#
-#/ Description: Module pour le traitement des arguments d'une     /#
-#/              ligne de commande                                 /#
-#/ Date: 24/08/2022                                               /#
+#/ Nom du projet: py-zpp_args									  /#
+#/ Nom du fichier: args.py										  /#
+#/ Type de fichier: fichier principal							  /#
+#/ Fichier annexe:												  /#
+#/																  /#
+#/ Auteur: ZephyrOff  (Alexandre Pajak)						      /#
+#/ Version: 1.2												      /#
+#/ Description: Module pour le traitement des arguments d'une	  /#
+#/			  ligne de commande								      /#
+#/ Date: 26/08/2022											      /#
 ####################################################################
 
 import sys
@@ -31,11 +31,21 @@ def get_origin_value():
 
 
 def digit(x):
-    try:
-        float(x)
-        return True
-    except ValueError:
-        return False
+	try:
+		float(x)
+		return True
+	except ValueError:
+		return False
+
+class StoreArgument():
+	def __init__(self):
+		pass
+
+	def list_all(self):
+		return self.__dict__
+
+	def __contains__(self, key):
+		return key in self.__dict__
 
 
 class parser():
@@ -70,13 +80,13 @@ class parser():
 
 
 	def set_param(self,option,val,store):
-		if option not in self.argument:
+		if not hasattr(self.argument, option):
 			if store=="digit":
 				if val.isdigit():
 					val = int(val)
 				else: 
 					val = float(val)
-			self.argument[option]=val
+			setattr(self.argument, option, val)
 			return True
 		else:
 			print(f"Argument {option} already set")
@@ -121,7 +131,7 @@ class parser():
 
 	def load(self):
 		self.parameter = []
-		self.argument = {}
+		self.argument = StoreArgument()
 
 		msg_error = "\nError: "
 
@@ -160,15 +170,19 @@ class parser():
 
 		msg=""
 		for ar in self.available_arg:
-			if not (ar['shortcut'] in self.argument or ar['longname'] in self.argument):
+			if not (hasattr(self.argument, ar['shortcut']) or hasattr(self.argument, ar['longname'])):
+				if ar['longname']:
+					name = ar['longname']
+				else:
+					name = ar['shortcut']
 				if "default" in ar.keys():
-					if ar['longname']:
-						name = ar['longname']
-					else:
-						name = ar['shortcut']
 					self.set_param(name,ar['default'],ar['type'])
 
-				if ar['required']==True and not (ar['shortcut'] in self.argument or ar['longname'] in self.argument):
+				elif ar['store']=="bool":
+					self.set_param(name,False,"str")
+
+
+				if ar['required']==True and not (hasattr(self.argument, ar['shortcut']) or hasattr(self.argument, ar['longname'])):
 					set_default=False
 					if "default" in ar.keys():
 						if ar['longname']:
