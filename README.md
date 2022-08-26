@@ -62,7 +62,7 @@ parse.set_argument(NAME)
 ```python
 argument, parameter = parse.load()
 ```
-Retourne une liste avec les paramètres et une classe (StoreArgument) avec les arguments
+Retourne une liste avec les paramètres et une classe (StoreArgument) avec les arguments.<br>
 La StoreArgument peut retourner un dictionnaire en appelant argument.list_all()
 
 <br>
