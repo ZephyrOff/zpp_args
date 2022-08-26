@@ -5,7 +5,7 @@
 #/ Fichier annexe:												  /#
 #/																  /#
 #/ Auteur: ZephyrOff  (Alexandre Pajak)						      /#
-#/ Version: 1.2												      /#
+#/ Version: 1.2.1											      /#
 #/ Description: Module pour le traitement des arguments d'une	  /#
 #/			  ligne de commande								      /#
 #/ Date: 26/08/2022											      /#
@@ -82,14 +82,20 @@ class parser():
 	def set_param(self,option,val,store):
 		if not hasattr(self.argument, option):
 			if store=="digit":
-				if val.isdigit():
-					val = int(val)
-				else: 
-					val = float(val)
+				if isinstance(val, str):
+					if val.isdigit():
+						val = int(val)
+					else: 
+						val = float(val)
+				elif isinstance(val, int) or isinstance(val, float):
+					pass
+				else:
+					return False
 			setattr(self.argument, option, val)
 			return True
 		else:
 			print(f"Argument {option} already set")
+			return False
 
 
 	def set_result(self,option):
