@@ -1,14 +1,14 @@
 ####################################################################
-#/ Nom du projet: py-zpp_args					                  /#
-#/ Nom du fichier: args.py					                      /#
-#/ Type de fichier: fichier principal				              /#
-#/ Fichier annexe:						                          /#
-#/								                                  /#
-#/ Auteur: ZephyrOff  (Alexandre Pajak)				              /#
-#/ Version: 1.2.2						                          /#
-#/ Description: Module pour le traitement des arguments d'une	  /#
-#/			  ligne de commande			                          /#
-#/ Date: 29/08/2022						                          /#
+#/ Nom du projet: py-zpp_args                                     /#
+#/ Nom du fichier: args.py                                        /#
+#/ Type de fichier: fichier principal                             /#
+#/ Fichier annexe:                                                /#
+#/                                                                /#
+#/ Auteur: ZephyrOff  (Alexandre Pajak)                           /#
+#/ Version: 1.2.2                                                 /#
+#/ Description: Module pour le traitement des arguments d'une     /#
+#/              ligne de commande                                 /#
+#/ Date: 29/08/2022                                               /#
 ####################################################################
 
 import sys
