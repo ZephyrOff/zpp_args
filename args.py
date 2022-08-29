@@ -1,14 +1,14 @@
 ####################################################################
-#/ Nom du projet: py-zpp_args									  /#
-#/ Nom du fichier: args.py										  /#
-#/ Type de fichier: fichier principal							  /#
-#/ Fichier annexe:												  /#
-#/																  /#
-#/ Auteur: ZephyrOff  (Alexandre Pajak)						      /#
-#/ Version: 1.2.1											      /#
+#/ Nom du projet: py-zpp_args					                  /#
+#/ Nom du fichier: args.py					                      /#
+#/ Type de fichier: fichier principal				              /#
+#/ Fichier annexe:						                          /#
+#/								                                  /#
+#/ Auteur: ZephyrOff  (Alexandre Pajak)				              /#
+#/ Version: 1.2.2						                          /#
 #/ Description: Module pour le traitement des arguments d'une	  /#
-#/			  ligne de commande								      /#
-#/ Date: 26/08/2022											      /#
+#/			  ligne de commande			                          /#
+#/ Date: 29/08/2022						                          /#
 ####################################################################
 
 import sys
@@ -123,7 +123,7 @@ class parser():
 						return None
 			else:
 				print(f"Argument {name}: Missing value")
-				if option['default']!=None:
+				if "default" in option.keys() and option['default']!=None:
 					if not self.set_param(name,option['default'],option['type']):
 						return None
 				else:
