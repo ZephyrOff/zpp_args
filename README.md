@@ -47,6 +47,7 @@ _Si non précisé, la fonction initialise shortcut_
 >- description: Pour ajouter une description à l'argument à afficher lors de l'appel de la commande help(Par défaut: None)
 >- required: Choisir si cet argument est nécessaire (Par défaut: False)
 >- store: Choisir si l'argument' est un simple True/False ou s'il attends une variable (Par défaut: bool)
+>- category: Choisir une catégorie pour l'affichage du help
 <br>
 
 ### Initialisation des paramètres
@@ -62,7 +63,7 @@ parse.set_argument(NAME)
 ```python
 argument, parameter = parse.load()
 ```
-Retourne une liste avec les paramètres et une classe (StoreArgument) avec les arguments.<br>
+Retourne une liste avec les paramètres et une classe (StoreArgument) avec les arguments
 La StoreArgument peut retourner un dictionnaire en appelant argument.list_all()
 
 <br>

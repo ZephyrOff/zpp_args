@@ -5,10 +5,10 @@
 #/ Fichier annexe:                                                /#
 #/                                                                /#
 #/ Auteur: ZephyrOff  (Alexandre Pajak)                           /#
-#/ Version: 1.2.2                                                 /#
+#/ Version: 1.3.0                                                 /#
 #/ Description: Module pour le traitement des arguments d'une     /#
 #/              ligne de commande                                 /#
-#/ Date: 29/08/2022                                               /#
+#/ Date: 23/12/2022                                               /#
 ####################################################################
 
 import sys
@@ -282,7 +282,7 @@ class parser():
 			print(f"Parameter {name} already set")
 
 
-	def set_argument(self, shortcut="", longname=None, type=None, default="", description=None, required=False, store="bool"):
+	def set_argument(self, shortcut="", longname=None, type=None, default="", description=None, required=False, store="bool", category=""):
 		if self.already_exist(shortcut,longname):
 			print("Error for setting argument")
 		else:
@@ -307,6 +307,9 @@ class parser():
 						insert['store'] = store
 					else:
 						insert['store'] = "bool"
+
+					insert['category'] = category
+
 					self.available_arg.append(insert)
 				else:
 					print("Argument h(help) not authorized")
@@ -322,6 +325,7 @@ class parser():
 		self.check_parameter = False
 
 	def help(self):
+		### Affichage du usage
 		mm = self.command + " [-h]"
 
 		for a in self.available_arg:
@@ -335,7 +339,6 @@ class parser():
 					mm+=" -"+val+" VALUE"
 				else:
 					mm+=" -"+val
-
 			else:
 				mm+=" ["
 				if a['store']=="value":
@@ -350,55 +353,78 @@ class parser():
 
 		print("\nUsage: "+mm)
 
+		### Affichage de la description
 		if hasattr(self, "main_description"):
 			print("\nDescription:\n  "+self.main_description)
 
+		### Affichage des options
 		if len(self.available_arg)!=0:
-			ar = []
 			maxsize = 0
 			print("\nArguments:")
+			### Parse by category
+			category = {"":{}}
 			for a in self.available_arg:
-				ins = ["",""]
 				if a['shortcut']!="":
-					ins[0]="  -"+a['shortcut']
-					if a['longname']:
-						ins[0]+=", --"+a['longname']
+					name = a['shortcut']
 				else:
-					ins[0]="  --"+a['longname']
-				if a['store']=="value":
-					ins[0]+=" VALUE"
+					name = a['longname']
 
-				if a['description']:
-					ins[1]+=a['description']
+				if a['category'] not in category:
+					category[a['category']] = {}
+				category[a['category']][name] = a
 
-				if a['required']:
-					if len(ins[1])!=0:
-						ins[1]+=" "
-					ins[1]+="(Required)"
+			if len(category)>1:
+				padding = "  "
+			else:
+				padding = ""
 
-				if a['type']=="digit":
-					if len(ins[1])!=0:
-						ins[1]+=" "
-					ins[1]+=" (Type: digit)"
-					
-				if "default" in a.keys() and a['default']:
-					if len(ins[1])!=0:
-						ins[1]+=" "
-
-					if a['default']==True:
-						ins[1]+=" (Default Value: True)"
-					elif a['default']==False:
-						ins[1]+=" (Default Value: False)"
+			for c in category:
+				if c!="":
+					print(f" {c}")
+				ar = []
+				for a in category[c]:
+					a = category[c][a]
+					ins = ["",""]
+					if a['shortcut']!="":
+						ins[0]="  -"+a['shortcut']
+						if a['longname']:
+							ins[0]+=", --"+a['longname']
 					else:
-						ins[1]+=" (Default Value: "+a['default']+")"
+						ins[0]="  --"+a['longname']
+					if a['store']=="value":
+						ins[0]+=" VALUE"
 
-				if len(ins[0])>maxsize:
-					maxsize = len(ins[0])
+					if a['description']:
+						ins[1]+=a['description']
 
-				ar.append(ins)
+					if a['required']:
+						if len(ins[1])!=0:
+							ins[1]+=" "
+						ins[1]+="(Required)"
 
-			for a in ar:
-				print(a[0]+" "*((maxsize-len(a[0]))+3)+a[1])
+					if a['type']=="digit":
+						if len(ins[1])!=0:
+							ins[1]+=" "
+						ins[1]+=" (Type: digit)"
+						
+					if "default" in a.keys() and a['default']:
+						if len(ins[1])!=0:
+							ins[1]+=" "
+
+						if a['default']==True:
+							ins[1]+=" (Default Value: True)"
+						elif a['default']==False:
+							ins[1]+=" (Default Value: False)"
+						else:
+							ins[1]+=" (Default Value: "+a['default']+")"
+
+					if len(ins[0])>maxsize:
+						maxsize = len(ins[0])
+
+					ar.append(ins)
+
+				for a in ar:
+					print(padding+a[0]+" "*((maxsize-len(a[0]))+3)+a[1])
 
 		if len(self.available_param)!=0:
 			ar = []
