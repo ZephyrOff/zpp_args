@@ -5,10 +5,10 @@
 #/ Fichier annexe:                                                /#
 #/                                                                /#
 #/ Auteur: ZephyrOff  (Alexandre Pajak)                           /#
-#/ Version: 1.3.0                                                 /#
+#/ Version: 1.3.1                                                 /#
 #/ Description: Module pour le traitement des arguments d'une     /#
 #/              ligne de commande                                 /#
-#/ Date: 23/12/2022                                               /#
+#/ Date: 26/12/2022                                               /#
 ####################################################################
 
 import sys
@@ -378,6 +378,24 @@ class parser():
 			else:
 				padding = ""
 
+			### Calcul maxsize padding
+			for c in category:
+				for a in category[c]:
+					a = category[c][a]
+					ins = ''
+					if a['shortcut']!="":
+						ins="  -"+a['shortcut']
+						if a['longname']:
+							ins+=", --"+a['longname']
+					else:
+						ins="  --"+a['longname']
+					if a['store']=="value":
+						ins+=" VALUE"
+
+					if len(ins)>maxsize:
+						maxsize = len(ins)
+
+			### Display category
 			for c in category:
 				if c!="":
 					print(f" {c}")
@@ -417,9 +435,6 @@ class parser():
 							ins[1]+=" (Default Value: False)"
 						else:
 							ins[1]+=" (Default Value: "+a['default']+")"
-
-					if len(ins[0])>maxsize:
-						maxsize = len(ins[0])
 
 					ar.append(ins)
 
