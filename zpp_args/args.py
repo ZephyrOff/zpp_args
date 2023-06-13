@@ -1,16 +1,3 @@
-####################################################################
-#/ Nom du projet: py-zpp_args                                     /#
-#/ Nom du fichier: args.py                                        /#
-#/ Type de fichier: fichier principal                             /#
-#/ Fichier annexe:                                                /#
-#/                                                                /#
-#/ Auteur: ZephyrOff  (Alexandre Pajak)                           /#
-#/ Version: 1.3.1                                                 /#
-#/ Description: Module pour le traitement des arguments d'une     /#
-#/              ligne de commande                                 /#
-#/ Date: 26/12/2022                                               /#
-####################################################################
-
 import sys
 import inspect
 import re
@@ -59,11 +46,7 @@ class parser():
 			self.command = sys.argv[0]
 			self.source=sys.argv[1:]
 		else:
-			if "sys.argv" in get_origin_value()[0]:
-				self.command = source[0]
-				self.source = source[1:]
-			else:
-				self.command, self.source = self.arg_parse(source)
+			self.command, self.source = self.arg_parse(source)
 
 	def search(self, option):
 		for element in self.available_arg:
@@ -434,7 +417,7 @@ class parser():
 						elif a['default']==False:
 							ins[1]+=" (Default Value: False)"
 						else:
-							ins[1]+=" (Default Value: "+a['default']+")"
+							ins[1]+=" (Default Value: "+str(a['default'])+")"
 
 					ar.append(ins)
 
