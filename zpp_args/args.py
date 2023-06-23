@@ -257,7 +257,7 @@ class parser():
 				return True
 		return False
 
-	def set_parameter(self, name, description=None):
+	def set_parameter(self, name, description=""):
 		if not self.param_exist(name):
 			insert = {'name': name, 'description': description}
 			self.available_param.append(insert)
